@@ -2,7 +2,7 @@
 name = "<project>"
 version = "<version>"
 description = "<description>"
-authors = ["<author>"]
+authors = [{name = "<author>", email = "<<email>>"}]
 readme = "README.md"
 
 [tool.poetry.dependencies]

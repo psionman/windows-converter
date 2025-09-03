@@ -11,6 +11,7 @@ DEFAULT_CONFIG = {
     'windows_base_directory': Path(HOME, 'projects', 'windows-projects'),
     'last_project': '',
     'author': '',
+    'email': '',
     'windows_project_directory': '',
     'windows_installation': '',
     'geometry': {
