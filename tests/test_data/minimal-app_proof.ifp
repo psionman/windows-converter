@@ -1,0 +1,101 @@
+
+[Header]
+ProjectFileVersion = 1.1
+[General]
+Program name = Minimal-app
+Program version = 0.0.0
+Windows XP = 0
+Windows Server 2003 = 0
+Windows Vista = 0
+Windows Server 2008 = 0
+Windows 7 = 1
+Windows 8 = 1
+Windows 10 = 1
+Windows Server 2016 = 0
+Windows Server 2019 = 0
+Windows Server 2022 = 0
+Windows 11 = 1
+DoNotCheckOS = 0
+Company name = BfG
+Website = https://
+SFA = 0
+DFA = 1
+Comp = 1
+[Graphics]
+Wizard image = <main>
+Header image = <main>
+Show Label = 1
+VisualStylesEnabled = 1
+[Files]
+Installation path = <ProgramFiles>BfG\MinimalApp
+Autcip = 1
+[Uninstall]
+Vwau = 0
+Website = https://
+Include uninstaller = 1
+Uninstaller filename = Uninstall
+UseCustomDisplayIcon = 0
+CustomDisplayIcon = <InstallPath>\
+[Licence]
+Licence dialog = 0
+[Finish]
+Sart program = 0
+Reboot computer = 0
+Program = <InstallPath>\
+ProgramArguments =
+[Shortcuts]
+Allowtc = 0
+Shortcut path = <Company>\<AppName>\
+[Serialoptions]
+Allows = 0
+Number = 1000
+Mask = #####-#####-#####-#####
+[SplashScreen]
+Image =
+Sound =
+Time = 2
+PlaySound = 0
+Allow = 0
+[Build]
+File = C:\Users\jeffw\projects\minimal_app\setup\MinimalApp_0.0.0.exe
+SetupIconPath = ..\icons\ancient.ico
+UninstallIconPath = ..\icons\ancient.ico
+CompressionMethod = 0
+CompressionLevel = 2
+[Updater]
+Allow = 0
+1 = <AppName>
+2 = <AppVersion>
+3 = http://
+4 = http://
+5 = http://
+6 = Update
+Language = 0
+RunProg =
+RunProgs = 0
+Execdlls = 0
+[Languages]
+[Files/Dirs]
+C:\Users\jeffw\projects\minimal_app\dist\MinimalApp.exe
+14 MB
+exe
+[Licence_Begin]
+155
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang2057{\fonttbl{\f0\fnil Arial;}}
+{\*\generator Riched20 10.0.19041}\viewkind4\uc1
+\pard\f0\fs20\par
+}
+[Licence_End]
+[Registry]
+[Variables]
+[SCs]
+Startmenu
+Minimal App
+<InstallPath>\MinimalApp.exe
+
+
+0
+[IFP_End]
+[Serials]
+[Serials_End]
+[Commands]

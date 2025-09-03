@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "minimal-app"
+version = "0.0.0"
+description = "Minimal-app"
+authors = ["Jeff Watkins"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.14"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+build = "minimal_app.pyinstaller:install"
