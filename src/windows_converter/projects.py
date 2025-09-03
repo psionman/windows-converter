@@ -1,4 +1,6 @@
 """Project classes for Windows converter."""
+
+import contextlib
 from tkinter import messagebox
 from typing import NamedTuple
 import json
@@ -152,6 +154,7 @@ class Project():
         return delimiter.join(upper)
 
     def build(self, config: TomlConfig, testing: bool = False) -> None:
+        del testing
         windows_project_dir = Path(
             config.windows_base_directory, self.windows_projects_directory)
         code_dir = Path(windows_project_dir, 'src')
@@ -236,8 +239,7 @@ class Project():
         code = self._get_text_file(file_name)
         code = code.replace('<<name>>', self.description)
         code = code.replace('<<company name>>', self.company_name)
-        code = code.replace(
-            '<<windows directory>>', self.windows_directory)
+        code = code.replace('<<windows directory>>', self.windows_directory)
         code = code.replace('<<exe name>>', self.exe_name)
         code = code.replace('<<installation path>>', self.installation_path)
         code = code.replace('<<version>>', self.version)
@@ -306,7 +308,7 @@ class ProjectServer():
         projects = {}
         project_data_len = len(ProjectData._fields)
         try:
-            with open(PROJECT_FILE, 'r') as f_projects:
+            with open(PROJECT_FILE, 'r', encoding='utf-8') as f_projects:
                 raw_data = json.load(f_projects)
                 for data in raw_data:
                     data = data + ['' for _ in range(project_data_len)]
@@ -325,12 +327,10 @@ class ProjectServer():
         return projects
 
     def save_projects(self, projects: list[Project] = None) -> None:
-        try:
+        with contextlib.suppress(FileExistsError):
             os.makedirs(USER_DATA_DIR)
-        except FileExistsError:
-            pass
         if not projects:
             projects = self.projects
         projects = [project.serialize() for project in projects.values()]
-        with open(PROJECT_FILE, 'w') as f_projects:
+        with open(PROJECT_FILE, 'w', encoding='utf-8') as f_projects:
             json.dump(projects, f_projects)
