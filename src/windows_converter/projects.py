@@ -54,10 +54,11 @@ class Project():
             self.windows_projects_directory = self.name
 
         if self.project_development_directory:
-            self.get_directories()
+            self._get_directories()
 
     def _assign_attributes(self, data: ProjectData) -> None:
-        config = read_config()
+        # pylint: disable=no-member)
+        self.config = read_config()
         self.name = data.name
         self.windows_projects_directory = data.windows_projects_directory
         self.project_development_directory = data.project_development_directory
@@ -75,31 +76,29 @@ class Project():
 
         # Author
         if not self.author:
-            self.author = config.author
+            self.author = self.config.author
 
         # Description
         if not self.description:
             self.description = self._name_upper(' ')
 
-        # Company name
+        # Windows_dir
         if not self.windows_directory:
-            if self.company_name:
-                self.windows_directory = (
-                    f'{config.windows_project_directory}\\'
-                    f'{self.company_name.lower()}\\'
-                    f'{self.name}')
-            else:
-                self.windows_directory = (
-                    f'{config.windows_project_directory}\\'
-                    f'{self.name}')
+            self.windows_directory = self._get_windows_dir()
 
         # Installation path
         if not self.installation_path:
-            # if self.company_name:
-            #     self.installation_path = (f'{self.company_name}\\'
-            #                               f'{data.installation_path}')
-            # else:
             self.installation_path = data.installation_path
+
+    def _get_windows_dir(self) -> str:
+        # pylint: disable=no-member)
+        if self.company_name:
+            return (
+                f'{self.config.windows_project_directory}\\'
+                f'{self.company_name.lower()}\\'
+                f'{self.name}')
+
+        return f'{self.config.windows_project_directory}\\{self.name}'
 
     def __repr__(self):
         return f'Project: {self.name}'
@@ -120,7 +119,7 @@ class Project():
             self.start_menu_text,
         )
 
-    def get_directories(self) -> None:
+    def _get_directories(self) -> None:
         if not self.src_directory:
             self._get_src_directory()
         if not self.image_directory:
@@ -155,56 +154,65 @@ class Project():
     def build(self, config: TomlConfig, testing: bool = False) -> None:
         windows_project_dir = Path(
             config.windows_base_directory, self.windows_projects_directory)
+        code_dir = Path(windows_project_dir, 'src')
         target = Path(windows_project_dir).parts[-1]
-        logger.debug((f'Building {self.project_development_directory} '
+
+        logger.info((f'Start building {self.project_development_directory} '
                      f'to {target}'))
-        # print(f'Building {Path(windows_project_dir)}')
 
         # Remove old project
         if windows_project_dir.is_dir():
             shutil.rmtree(windows_project_dir)
-        logger.debug('Removed old project')
+        logger.info('Old project data removed')
 
+        self._create_directories(windows_project_dir, code_dir)
+        self._create_tests_directory(windows_project_dir)
+        self._create_pyinstaller(code_dir)
+        self._create_pyproject(windows_project_dir)
+        self._create_readme(windows_project_dir)
+        self._create_installforge(windows_project_dir)
+        self._create_requirements(code_dir)
+        logger.info('Build complete')
+        return self.status_ok
+
+    def _create_directories(
+            self, windows_project_dir: Path, code_dir: Path) -> None:
         # Create project directory
         windows_project_dir.mkdir(parents=True, exist_ok=True)
-        logger.debug('Created project')
+        logger.info(f'Created windows project dir {windows_project_dir}')
 
         # Create the code directory
-        # code_dir = Path(windows_project_dir, self.windows_projects_directory)
-        code_dir = Path(windows_project_dir, 'src')
         code_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f'Created code dir {code_dir}')
 
         # Create the setup directory
         setup_dir = Path(windows_project_dir, 'setup')
         setup_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f'Created setup dir {setup_dir}')
 
         # Build src directory
         src_dir = Path(code_dir, self.windows_projects_directory)
         shutil.copytree(self.src_directory, src_dir, dirs_exist_ok=True)
+        logger.info(f'Source copied to {src_dir}')
 
-        self._validate_icons(src_dir, testing)
-
-        # Build images directory
-        img_dir = Path(code_dir, 'images')
-        shutil.copytree(self.image_directory, img_dir, dirs_exist_ok=True)
-
-        # Build tests directory
+    def _create_tests_directory(self, windows_project_dir: Path) -> None:
         tests_dir = Path(windows_project_dir, 'tests')
         tests_dir.mkdir(parents=True, exist_ok=True)
         if self.tests_directory:
             shutil.copytree(
                 self.tests_directory, tests_dir, dirs_exist_ok=True)
-        logger.debug('Created project')
+        logger.info(f'Created tests dir {tests_dir}')
 
-        # pyinstaller
+    def _create_pyinstaller(self, code_dir: Path) -> None:
         file_name = 'pyinstaller.py'
         code = self._get_text_file(file_name)
         code = code.replace('<exe_name>', self.exe_name)
         code = code.replace('<project_dir>', self.windows_projects_directory)
         target_file = Path(code_dir, file_name)
         self._save_text_file(target_file, code)
+        logger.info(f'Created {file_name}')
 
-        # pyproject.toml
+    def _create_pyproject(self, windows_project_dir: Path) -> None:
         file_name = 'pyproject.toml'
         code = self._get_text_file(file_name)
         code = code.replace('<description>', self.description)
@@ -214,14 +222,16 @@ class Project():
         code = code.replace('<version>', self.version)
         target_file = Path(windows_project_dir, file_name)
         self._save_text_file(target_file, code)
+        logger.info(f'Created {file_name}')
 
-        # README
+    def _create_readme(self, windows_project_dir: Path) -> None:
         file_name = 'README.md'
         code = ''
         target_file = Path(windows_project_dir, file_name)
         self._save_text_file(target_file, code)
+        logger.info(f'Created {file_name}')
 
-        # InstallForge spec
+    def _create_installforge(self, windows_project_dir: Path) -> None:
         file_name = 'installforge.ifp'
         code = self._get_text_file(file_name)
         code = code.replace('<<name>>', self.description)
@@ -234,26 +244,19 @@ class Project():
         code = code.replace('<<start menu text>>', self.start_menu_text)
         target_file = Path(windows_project_dir, f'{self.name}.ifp')
         self._save_text_file(target_file, code)
+        logger.info(f'Created {file_name}')
 
-        # # requirements.txt
+    def _create_requirements(self, code_dir: Path) -> None:
+        file_name = 'requirements.txt'
         requirements_source = Path(
-            Path(self.project_development_directory).parent,
-            'requirements.txt')
+            Path(self.project_development_directory).parent,file_name)
         if requirements_source.is_file():
             requirements_target = Path(
-                Path(code_dir).parent, 'requirements.txt')
+                Path(code_dir).parent, file_name)
             shutil.copyfile(requirements_source, requirements_target)
+            logger.info(f'Created {file_name}')
         else:
-            messagebox.showwarning(
-                '',
-                'No requirements file in project source directory'
-            )
-
-        logger.debug('Created text files')
-
-        logger.debug('*** Build complete ***')
-
-        return self.status_ok
+            logger.warning(f'No {file_name} in project source directory')
 
     def _validate_icons(self, src_dir: Path, testing: bool) -> None:
         dirs = [dir.name for dir in Path(self.src_directory).iterdir()
