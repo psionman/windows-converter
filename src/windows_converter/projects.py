@@ -36,6 +36,7 @@ class Project():
         self.name = ''
         self.description = ''
         self.author = ''
+        self.email = ''
         self.exe_name = ''
         self.windows_projects_directory = ''
         self.project_development_directory = ''
@@ -70,15 +71,15 @@ class Project():
         self.company_name = data.company_name
         self.start_menu_text = data.start_menu_text
         self.installation_path = data.installation_path
-        self.exe_name = data.exe_name
-
-        # Exe name
-        if not self.exe_name:
-            self.exe_name = self._name_upper('')
+        self.exe_name = data.exe_name or self._name_upper('')
 
         # Author
         if not self.author:
             self.author = self.config.author
+
+        # Email
+        if not self.email:
+            self.email = self.config.email
 
         # Description
         if not self.description:
@@ -210,7 +211,7 @@ class Project():
         file_name = 'pyinstaller.py'
         code = self._get_text_file(file_name)
         code = code.replace('<exe_name>', self.exe_name)
-        code = code.replace('<project_dir>', self.windows_projects_directory)
+        code = code.replace('<project>', self.name)
         target_file = Path(code_dir, file_name)
         self._save_text_file(target_file, code)
         logger.info(f'Created {file_name}')
@@ -220,6 +221,7 @@ class Project():
         code = self._get_text_file(file_name)
         code = code.replace('<description>', self.description)
         code = code.replace('<author>', self.author)
+        code = code.replace('<email>', self.email)
         code = code.replace('<project>', self.name)
         code = code.replace('<project_dir>', self.windows_projects_directory)
         code = code.replace('<version>', self.version)

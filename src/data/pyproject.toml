@@ -1,17 +1,13 @@
-[tool.poetry]
+[project]
 name = "<project>"
 version = "<version>"
 description = "<description>"
-authors = [{name = "<author>", email = "<<email>>"}]
+authors = [{name = "<author>", email = "<email>"}]
 readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "pyinstaller"
+]
 
-[tool.poetry.dependencies]
-python = ">=3.11,<3.14"
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
-build = "src.pyinstaller:install"
+[project.scripts]
+build = "bbochat.pyinstaller:install"
