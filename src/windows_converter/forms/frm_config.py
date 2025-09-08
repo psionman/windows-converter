@@ -6,11 +6,12 @@ from pathlib import Path
 
 from psiutils.buttons import ButtonFrame
 from psiutils.constants import PAD
-from psiutils.utilities import window_resize, logger
+from psiutils.utilities import window_resize
 
 from windows_converter.config import read_config
 from windows_converter.constants import APP_TITLE
 import windows_converter.text as txt
+from windows_converter import logger
 
 FRAME_TITLE = f'{APP_TITLE} - {txt.CONFIG}'
 
