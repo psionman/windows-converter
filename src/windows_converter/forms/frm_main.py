@@ -14,11 +14,12 @@ from psiutils.menus import Menu, MenuItem
 from windows_converter.config import read_config
 from windows_converter.projects import ProjectServer
 from windows_converter.constants import APP_TITLE
-import windows_converter.text as txt
+from windows_converter.text import Text
 
 from windows_converter.main_menu import MainMenu
 from windows_converter.forms.frm_project import ProjectFrame
 
+txt = Text(1)
 FRAME_TITLE = APP_TITLE
 
 
@@ -108,6 +109,7 @@ class MainFrame():
         self._project_clicked(event)
 
     def _context_menu(self) -> tk.Menu:
+        # pylint: disable=no-member)
         menu_items = [
             MenuItem(txt.NEW, self._new_project),
             MenuItem(txt.BUILD, self._build_project, dimmable=True),

@@ -10,9 +10,11 @@ from psiutils.utilities import window_resize
 
 from windows_converter.config import read_config
 from windows_converter.constants import APP_TITLE
-import windows_converter.text as txt
+from windows_converter.text import Text
 from windows_converter import logger
 
+txt = Text()
+# pylint: disable=no-member)
 FRAME_TITLE = f'{APP_TITLE} - {txt.CONFIG}'
 
 FIELDS = {

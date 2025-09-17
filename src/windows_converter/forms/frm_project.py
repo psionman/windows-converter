@@ -6,15 +6,16 @@ from pathlib import Path
 import re
 
 from psiutils.constants import PAD, MODES
-from psiutils.buttons import ButtonFrame, Button
+from psiutils.buttons import ButtonFrame
 from psiutils.widgets import separator_frame, Tooltip
 from psiutils.utilities import window_resize
 
 from windows_converter.constants import APP_TITLE
 from windows_converter.config import read_config
 from windows_converter.projects import Project
-import windows_converter.text as txt
+from windows_converter.text import Text
 
+txt = Text()
 FRAME_TITLE = f'{APP_TITLE} - MODE project'
 
 
@@ -101,6 +102,7 @@ class ProjectFrame():
         sizegrip.grid(sticky=tk.SE)
 
     def _main_frame(self, master: tk.Frame) -> ttk.Frame:
+        # pylint: disable=no-member)
         frame = ttk.Frame(master)
         frame.columnconfigure(1, weight=1)
 
@@ -282,7 +284,7 @@ class ProjectFrame():
             return
         try:
             src_dir = Path(self.source_directory.get(), '_version.py')
-            with open(src_dir, 'r') as f_version:
+            with open(src_dir, 'r', encoding='utf-8') as f_version:
                 version = f_version.read()
 
                 version_re = r'[0-9]{1,}.[0-9]{1,}.[0-9]{1,}'
@@ -299,6 +301,7 @@ class ProjectFrame():
             )
 
     def _project_name_changed(self, *args) -> None:
+        # pylint: disable=no-member)
         if self.mode != MODES['new']:
             return
 
@@ -344,6 +347,7 @@ class ProjectFrame():
 
         if self.mode == MODES['new']:
             self.project = Project()
+
         self.project.name = self.project_name.get()
         self.project.description = self.description.get()
         self.project.author = self.author.get()
