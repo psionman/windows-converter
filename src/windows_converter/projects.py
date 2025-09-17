@@ -8,10 +8,9 @@ import os
 import shutil
 from pathlib import Path
 
-from psiutils.utilities import logger
-
 from windows_converter.constants import PROJECT_FILE, USER_DATA_DIR
 from windows_converter.config import TomlConfig, read_config
+from windows_converter import logger
 
 
 class ProjectData(NamedTuple):
@@ -30,7 +29,7 @@ class ProjectData(NamedTuple):
 
 
 class Project():
-    def __init__(self, data: ProjectData = None) -> None:
+    def __init__(self, data: dict = None) -> None:
         if data is None:
             data = {}
         self.name = ''
@@ -50,7 +49,7 @@ class Project():
         self.version = '0.0.0'
         self.status_ok = 1
 
-        if data:
+        if data and isinstance(data, dict):
             self._assign_attributes(data)
 
         if not self.windows_projects_directory:
@@ -58,40 +57,9 @@ class Project():
 
         if self.project_development_directory:
             self._get_directories()
-
-    def _assign_attributes(self, data: ProjectData) -> None:
-        # pylint: disable=no-member)
-        self.config = read_config()
-        self.name = data.name
-        self.windows_projects_directory = data.windows_projects_directory
-        self.project_development_directory = data.project_development_directory
-        self.src_directory = data.src_directory
-        self.image_directory = data.image_directory
-        self.windows_directory = data.windows_directory
-        self.company_name = data.company_name
-        self.start_menu_text = data.start_menu_text
-        self.installation_path = data.installation_path
-        self.exe_name = data.exe_name or self._name_upper('')
-
-        # Author
-        if not self.author:
-            self.author = self.config.author
-
-        # Email
-        if not self.email:
-            self.email = self.config.email
-
-        # Description
-        if not self.description:
-            self.description = self._name_upper(' ')
-
-        # Windows_dir
-        if not self.windows_directory:
-            self.windows_directory = self._get_windows_dir()
-
-        # Installation path
-        if not self.installation_path:
-            self.installation_path = data.installation_path
+    def _assign_attributes(self, data: dict) -> None:
+        for key, item in data.items():
+            setattr(self, key, item)
 
     def _get_windows_dir(self) -> str:
         # pylint: disable=no-member)
@@ -105,22 +73,6 @@ class Project():
 
     def __repr__(self):
         return f'Project: {self.name}'
-
-    def serialize(self) -> tuple:
-        return (
-            self.name,
-            self.description,
-            self.author,
-            self.exe_name,
-            self.windows_projects_directory,
-            self.project_development_directory,
-            self.src_directory,
-            self.image_directory,
-            self.windows_directory,
-            self.company_name,
-            self.installation_path,
-            self.start_menu_text,
-        )
 
     def _get_directories(self) -> None:
         if not self.src_directory:
@@ -147,7 +99,7 @@ class Project():
                 self.project_development_directory):
             for subdir_name in subdir_list:
                 if subdir_name in names:
-                    return Path(directory_name, subdir_name)
+                    return str(Path(directory_name, subdir_name))
 
     def _name_upper(self, delimiter: str = '') -> str:
         words = self.name.split('_')
@@ -253,7 +205,7 @@ class Project():
     def _create_requirements(self, code_dir: Path) -> None:
         file_name = 'requirements.txt'
         requirements_source = Path(
-            Path(self.project_development_directory).parent,file_name)
+            Path(self.project_development_directory).parent, file_name)
         if requirements_source.is_file():
             requirements_target = Path(
                 Path(code_dir).parent, file_name)
@@ -308,24 +260,19 @@ class ProjectServer():
 
     def read_projects(self) -> list[Project]:
         projects = {}
-        project_data_len = len(ProjectData._fields)
         try:
             with open(PROJECT_FILE, 'r', encoding='utf-8') as f_projects:
                 raw_data = json.load(f_projects)
-                for data in raw_data:
-                    data = data + ['' for _ in range(project_data_len)]
-                    data = data[:project_data_len]
-                    project = Project(ProjectData(*data))
-                    projects[project.name] = project
+            for name, data in raw_data.items():
+                project = Project(data)
+                project.name = name
+                projects[project.name] = project
         except FileNotFoundError:
             print(f'*** {PROJECT_FILE} FileNotFoundError ***')
-            return []
         except IsADirectoryError:
             print(f'*** {PROJECT_FILE} IsADirectoryError ***')
-            return []
         except json.decoder.JSONDecodeError:
             print(f'*** {PROJECT_FILE} SONDecodeError ***')
-            return []
         return projects
 
     def save_projects(self, projects: list[Project] = None) -> None:
@@ -333,6 +280,8 @@ class ProjectServer():
             os.makedirs(USER_DATA_DIR)
         if not projects:
             projects = self.projects
-        projects = [project.serialize() for project in projects.values()]
+
+        projects_dict = {project.name: vars(project)
+                         for project in projects.values()}
         with open(PROJECT_FILE, 'w', encoding='utf-8') as f_projects:
-            json.dump(projects, f_projects)
+            json.dump(projects_dict, f_projects)
