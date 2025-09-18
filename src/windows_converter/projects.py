@@ -7,9 +7,10 @@ import json
 import os
 import shutil
 from pathlib import Path
+import subprocess
 
 from windows_converter.constants import PROJECT_FILE, USER_DATA_DIR
-from windows_converter.config import TomlConfig, read_config
+from windows_converter.config import TomlConfig
 from windows_converter import logger
 
 
@@ -18,8 +19,8 @@ class ProjectData(NamedTuple):
     description: str
     author: str
     exe_name: str
-    windows_projects_directory: str
-    project_development_directory: str
+    windows_projects_dir: str
+    project_base_dir: str
     src_directory: str
     image_directory: str
     windows_directory: str
@@ -37,8 +38,8 @@ class Project():
         self.author = ''
         self.email = ''
         self.exe_name = ''
-        self.windows_projects_directory = ''
-        self.project_development_directory = ''
+        self.windows_projects_dir = ''
+        self.project_base_dir = ''
         self.src_directory = ''
         self.image_directory = ''
         self.tests_directory = ''
@@ -52,11 +53,12 @@ class Project():
         if data and isinstance(data, dict):
             self._assign_attributes(data)
 
-        if not self.windows_projects_directory:
-            self.windows_projects_directory = self.name
+        if not self.windows_projects_dir:
+            self.windows_projects_dir = self.name
 
-        if self.project_development_directory:
+        if self.project_base_dir:
             self._get_directories()
+
     def _assign_attributes(self, data: dict) -> None:
         for key, item in data.items():
             setattr(self, key, item)
@@ -96,7 +98,7 @@ class Project():
 
     def _get_dir(self, names: list[str]) -> str:
         for directory_name, subdir_list, _ in os.walk(
-                self.project_development_directory):
+                self.project_base_dir):
             for subdir_name in subdir_list:
                 if subdir_name in names:
                     return str(Path(directory_name, subdir_name))
@@ -106,14 +108,19 @@ class Project():
         upper = [word.capitalize() for word in words]
         return delimiter.join(upper)
 
-    def build(self, config: TomlConfig, testing: bool = False) -> None:
+    def build(
+            self,
+            config: TomlConfig,
+            update_requirements: bool = False,
+            testing: bool = False,
+            ) -> None:
         del testing
         windows_project_dir = Path(
-            config.windows_base_directory, self.windows_projects_directory)
+            config.windows_base_directory, self.windows_projects_dir)
         code_dir = Path(windows_project_dir, 'src')
         target = Path(windows_project_dir).parts[-1]
 
-        logger.info((f'Start building {self.project_development_directory} '
+        logger.info((f'Start building {self.project_base_dir} '
                      f'to {target}'))
 
         # Remove old project
@@ -127,7 +134,7 @@ class Project():
         self._create_pyproject(windows_project_dir)
         self._create_readme(windows_project_dir)
         self._create_installforge(windows_project_dir)
-        self._create_requirements(code_dir)
+        self._create_requirements(code_dir, update_requirements)
         logger.info('Build complete')
         return self.status_ok
 
@@ -147,7 +154,7 @@ class Project():
         logger.info(f'Created setup dir {setup_dir}')
 
         # Build src directory
-        src_dir = Path(code_dir, self.windows_projects_directory)
+        src_dir = Path(code_dir, self.windows_projects_dir)
         shutil.copytree(self.src_directory, src_dir, dirs_exist_ok=True)
         logger.info(f'Source copied to {src_dir}')
 
@@ -175,7 +182,7 @@ class Project():
         code = code.replace('<author>', self.author)
         code = code.replace('<email>', self.email)
         code = code.replace('<project>', self.name)
-        code = code.replace('<project_dir>', self.windows_projects_directory)
+        code = code.replace('<project_dir>', self.windows_projects_dir)
         code = code.replace('<version>', self.version)
         target_file = Path(windows_project_dir, file_name)
         self._save_text_file(target_file, code)
@@ -202,10 +209,32 @@ class Project():
         self._save_text_file(target_file, code)
         logger.info(f'Created {file_name}')
 
-    def _create_requirements(self, code_dir: Path) -> None:
+    def _create_requirements(
+            self, code_dir: Path, update_requirements: bool) -> None:
+        if update_requirements:
+            self._create_requirements()
+        self._copy_requirements(code_dir)
+
+    def _create_requirements(self) -> int:
+        with open(
+                Path(self.project_base_dir, 'requirements.txt'),
+                'w',
+                encoding='utf-8') as f_requirements:
+            subprocess.run(
+                [f'{self.project_base_dir}/.venv/bin/pip3',
+                 'freeze'],
+                stdout=f_requirements,
+                check=True
+            )
+            logger.info(
+                "Update project dependencies: requirements_created",
+                project=self.name,
+            )
+
+    def _copy_requirements(self, code_dir: Path) -> None:
         file_name = 'requirements.txt'
         requirements_source = Path(
-            Path(self.project_development_directory).parent, file_name)
+            Path(self.project_base_dir).parent, file_name)
         if requirements_source.is_file():
             requirements_target = Path(
                 Path(code_dir).parent, file_name)

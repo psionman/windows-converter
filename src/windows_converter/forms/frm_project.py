@@ -14,6 +14,7 @@ from windows_converter.constants import APP_TITLE
 from windows_converter.config import read_config
 from windows_converter.projects import Project
 from windows_converter.text import Text
+from windows_converter import logger
 
 txt = Text()
 FRAME_TITLE = f'{APP_TITLE} - MODE project'
@@ -43,11 +44,11 @@ class ProjectFrame():
         self.description = tk.StringVar(value=self.project.description)
         self.author = tk.StringVar(value=self.project.author)
         self.exe_name = tk.StringVar(value=self.project.exe_name)
-        self.windows_projects_directory = tk.StringVar(
-            value=self.project.windows_projects_directory)
+        self.windows_projects_dir = tk.StringVar(
+            value=self.project.windows_projects_dir)
 
-        self.project_development_directory = tk.StringVar(
-            value=self.project.project_development_directory)
+        self.project_base_dir = tk.StringVar(
+            value=self.project.project_base_dir)
         self.development_directory_tooltip_text = tk.StringVar(
             value=dev_dir_tooltip)
 
@@ -68,6 +69,7 @@ class ProjectFrame():
             value=self.project.installation_path)
         self.start_menu_text = tk.StringVar(value=self.project.start_menu_text)
         self.version = tk.StringVar(value=self.project.version)
+        self.update_requirements = tk.BooleanVar(value=False)
         self.close_on_build = tk.BooleanVar(value=True)
 
         self.project_name.trace_add('write', self._project_name_changed)
@@ -102,6 +104,51 @@ class ProjectFrame():
         sizegrip.grid(sticky=tk.SE)
 
     def _main_frame(self, master: tk.Frame) -> ttk.Frame:
+        frame = ttk.Frame(master)
+        frame.columnconfigure(0, weight=1)
+
+        row = 0
+        # Project name
+        project_frame = self._project_frame(frame)
+        project_frame.grid(row=row, column=0, sticky=tk.EW)
+
+        row += 1
+        # Local dirs
+        separator = separator_frame(frame, 'Local directories')
+        separator.grid(row=row, column=0, sticky=tk.EW, padx=PAD)
+
+        row += 1
+        # Project dir
+        local_frame = self._local_frame(frame)
+        local_frame.grid(row=row, column=0, sticky=tk.EW)
+
+        row += 1
+        separator = separator_frame(frame, 'Windows')
+        separator.grid(row=row, column=0, sticky=tk.EW, padx=PAD)
+
+        row += 1
+        windows_frame = self._windows_frame(frame)
+        windows_frame.grid(row=row, column=0, sticky=tk.EW)
+
+        row += 1
+        separator = separator_frame(frame, 'Build')
+        separator.grid(row=row, column=0, sticky=tk.EW, padx=PAD)
+
+        row += 1
+        # Close after build
+        check_button = tk.Checkbutton(frame, text='Update requirements.txt',
+                                      variable=self.update_requirements)
+        check_button.grid(row=row, column=0, sticky=tk.W)
+
+        row += 1
+        # Close after build
+        check_button = tk.Checkbutton(frame, text='Close after build',
+                                      variable=self.close_on_build)
+        check_button.grid(row=row, column=0, sticky=tk.W)
+
+        return frame
+
+    def _project_frame(self, master: tk.Frame) -> ttk.Frame:
         # pylint: disable=no-member)
         frame = ttk.Frame(master)
         frame.columnconfigure(1, weight=1)
@@ -121,7 +168,7 @@ class ProjectFrame():
         # Windows project dir
         label = ttk.Label(frame, text='Directory in windows-projects')
         label.grid(row=row, column=0, sticky=tk.E, padx=PAD, pady=PAD)
-        entry = ttk.Entry(frame, textvariable=self.windows_projects_directory)
+        entry = ttk.Entry(frame, textvariable=self.windows_projects_dir)
         entry.grid(row=row, column=1, sticky=tk.EW)
 
         row += 1
@@ -152,18 +199,18 @@ class ProjectFrame():
         entry = ttk.Entry(frame, textvariable=self.version)
         entry.grid(row=row, column=1, sticky=tk.EW)
 
-        row += 1
-        # LOcal dirs
-        separator = separator_frame(frame, 'Local directories')
-        separator.grid(row=row, column=0, columnspan=4,
-                       sticky=tk.EW, padx=PAD)
+        return frame
 
-        row += 1
-        # Project dir
+    def _local_frame(self, master: tk.Frame) -> ttk.Frame:
+        # pylint: disable=no-member)
+        frame = ttk.Frame(master)
+        frame.columnconfigure(1, weight=1)
+
+        row = 0
         label = ttk.Label(frame, text='Project directory')
         label.grid(row=row, column=0, sticky=tk.E, padx=PAD, pady=PAD)
         entry = ttk.Entry(
-            frame, textvariable=self.project_development_directory)
+            frame, textvariable=self.project_base_dir)
         entry.grid(row=row, column=1, sticky=tk.EW)
         self._entry_tooltip(entry, self.development_directory_tooltip_text,)
         button = ttk.Button(frame, text=txt.ELLIPSIS,
@@ -192,12 +239,14 @@ class ProjectFrame():
                             command=self._image_directory)
         button.grid(row=row, column=3, padx=PAD)
 
-        row += 1
-        separator = separator_frame(frame, 'Windows')
-        separator.grid(row=row, column=0, columnspan=4,
-                       sticky=tk.EW, padx=PAD)
+        return frame
 
-        row += 1
+    def _windows_frame(self, master: tk.Frame) -> ttk.Frame:
+        # pylint: disable=no-member)
+        frame = ttk.Frame(master)
+        frame.columnconfigure(1, weight=1)
+
+        row = 0
         # Company name
         label = ttk.Label(frame, text='Company name')
         label.grid(row=row, column=0, sticky=tk.E, padx=PAD, pady=PAD)
@@ -225,25 +274,14 @@ class ProjectFrame():
         entry = ttk.Entry(frame, textvariable=self.start_menu_text)
         entry.grid(row=row, column=1, sticky=tk.EW)
 
-        row += 1
-        separator = separator_frame(frame, 'Build')
-        separator.grid(row=row, column=0, columnspan=4,
-                       sticky=tk.EW, padx=PAD)
-
-        row += 1
-        # Close after build
-        check_button = tk.Checkbutton(frame, text='Close after build',
-                                      variable=self.close_on_build)
-        check_button.grid(row=row, column=1, sticky=tk.W)
-
         return frame
 
     def _button_frame(self, master: tk.Frame) -> tk.Frame:
         frame = ButtonFrame(master, tk.HORIZONTAL)
         frame.buttons = [
-            frame.icon_button('save', False, self._save_project),
-            frame.icon_button('build', False, self._build),
-            frame.icon_button('exit', False, self._dismiss),
+            frame.icon_button('save', self._save_project),
+            frame.icon_button('build', self._build),
+            frame.icon_button('exit', self._dismiss),
         ]
         frame.enable(False)
         return frame
@@ -255,25 +293,25 @@ class ProjectFrame():
 
     def _project_directory(self, *args) -> None:
         # pylint: disable=no-member)
-        initialdir = self.project_development_directory.get()
+        initialdir = self.project_base_dir.get()
         if not initialdir:
             initialdir = self.config.projects_directory
         dlg = filedialog.askdirectory(
             initialdir=initialdir,
         )
         if dlg:
-            self.project_development_directory.set(dlg)
+            self.project_base_dir.set(dlg)
 
     def _source_directory(self, *args) -> None:
         dlg = filedialog.askdirectory(
-            initialdir=self.project_development_directory.get(),
+            initialdir=self.project_base_dir.get(),
         )
         if dlg:
             self.source_directory.set(dlg)
 
     def _image_directory(self, *args) -> None:
         dlg = filedialog.askdirectory(
-            initialdir=self.project_development_directory.get(),
+            initialdir=self.project_base_dir.get(),
         )
         if dlg:
             self.image_directory.set(dlg)
@@ -295,10 +333,7 @@ class ProjectFrame():
                 self.version.set(match.group())
 
         except FileNotFoundError:
-            messagebox.showwarning(
-                '',
-                'No _version file found'
-            )
+            logger.error('No _version file found')
 
     def _project_name_changed(self, *args) -> None:
         # pylint: disable=no-member)
@@ -307,7 +342,7 @@ class ProjectFrame():
 
         name = self.project_name.get()
         self.description.set(self._name_upper(name))
-        self.windows_projects_directory.set(name)
+        self.windows_projects_dir.set(name)
         self.exe_name.set(self._name_upper(name, delimiter=''))
         self.start_menu_text.set(self.description.get())
         self.installation_path.set(
@@ -352,10 +387,10 @@ class ProjectFrame():
         self.project.description = self.description.get()
         self.project.author = self.author.get()
         self.project.exe_name = self.exe_name.get()
-        windows_projects_directory = self.windows_projects_directory.get()
-        self.project.windows_projects_directory = windows_projects_directory
-        project_development_dir = self.project_development_directory.get()
-        self.project.project_development_directory = project_development_dir
+        windows_projects_dir = self.windows_projects_dir.get()
+        self.project.windows_projects_dir = windows_projects_dir
+        project_base_dir = self.project_base_dir.get()
+        self.project.project_base_dir = project_base_dir
         self.project.src_directory = self.source_directory.get()
         self.project.image_directory = self.image_directory.get()
         self.project.windows_directory = self.windows_directory.get()
@@ -386,7 +421,7 @@ class ProjectFrame():
 
         config = read_config()
         self._update_project()
-        result = self.project.build(config)
+        result = self.project.build(config, self.update_requirements.get())
         if result == self.project.status_ok:
             messagebox.showinfo(
                 '',
@@ -404,10 +439,8 @@ class ProjectFrame():
         self.project.description = self.description.get()
         self.project.author = self.author.get()
         self.project.exe_name = self.exe_name.get()
-        windows_projects_directory = self.windows_projects_directory.get()
-        self.project.windows_projects_directory = windows_projects_directory
-        project_development_dir = self.project_development_directory.get()
-        self.project.project_development_directory = project_development_dir
+        self.project.windows_projects_dir = self.windows_projects_dir.get()
+        self.project.project_base_dir = self.project_base_dir.get()
         self.project.src_directory = self.source_directory.get()
         self.project.image_directory = self.image_directory.get()
         self.project.windows_directory = self.windows_directory.get()

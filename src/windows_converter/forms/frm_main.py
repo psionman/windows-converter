@@ -19,7 +19,7 @@ from windows_converter.text import Text
 from windows_converter.main_menu import MainMenu
 from windows_converter.forms.frm_project import ProjectFrame
 
-txt = Text(1)
+txt = Text()
 FRAME_TITLE = APP_TITLE
 
 
@@ -95,9 +95,9 @@ class MainFrame():
         frame = ttk.Frame(master)
         frame = ButtonFrame(master, tk.VERTICAL)
         frame.buttons = [
-            frame.icon_button('new', False, self._new_project),
-            frame.icon_button('build', True, self._build_project),
-            frame.icon_button('close', False, self._dismiss),
+            frame.icon_button('new', self._new_project),
+            frame.icon_button('build', self._build_project, True),
+            frame.icon_button('close', self._dismiss),
         ]
         frame.enable(False)
         return frame
