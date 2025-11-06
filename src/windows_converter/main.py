@@ -1,12 +1,16 @@
 """Main module for Windows converter."""
-
-from root import Root
+from pathlib import Path
 
 from psiutils.icecream_init import ic_init
+
+from windows_converter.modules import check_imports
+from windows_converter.root import Root
+
 ic_init()
 
 
 def main():
+    check_imports('windows_converter', Path(__file__).parent)
     Root()
 
 

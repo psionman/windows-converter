@@ -16,6 +16,7 @@ from windows_converter.forms.frm_main import MainFrame
 
 
 class Root():
+    """Main Tk loop."""
     def __init__(self) -> None:
         """Create the app's root and loop."""
         root = tk.Tk()

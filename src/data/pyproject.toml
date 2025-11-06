@@ -4,10 +4,10 @@ version = "<version>"
 description = "<description>"
 authors = [{name = "<author>", email = "<email>"}]
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.13,<3.14"
 dependencies = [
   "pyinstaller"
 ]
 
 [project.scripts]
-build = "bbochat.pyinstaller:install"
+build = "<project>.pyinstaller:install"

@@ -1,13 +1,13 @@
 import sys
 
 from psiutils.constants import MODES
+from psiutils.utilities import notify
 
 from windows_converter.config import read_config
 from windows_converter.projects import ProjectServer
 
 from windows_converter.forms.frm_config import ConfigFrame
 from windows_converter.forms.frm_project import ProjectFrame
-
 
 class ModuleCaller():
     def __init__(self, root, module) -> None:
@@ -47,6 +47,11 @@ class ModuleCaller():
         item = 0
         if len(sys.argv) > 2:
             item = sys.argv[2]
+            if item not in projects:
+                msg =f'*** {item} not in Windows Builder\'s projects ***'
+                print(msg)
+                notify('Windows Builder', msg)
+                return
             dlg = ProjectFrame(self, MODES['edit'], projects[item])
         else:
             dlg = ProjectFrame(self, MODES['new'])
