@@ -18,7 +18,7 @@ for project in projects:
 
 min_project.build(config, testing=True)
 WINDOWS_PROJECT_DIR = Path(
-    config.windows_base_directory, min_project.directory)
+    config.build_base_dir, min_project.directory)
 CODE_DIR = Path(WINDOWS_PROJECT_DIR, min_project.directory)
 
 IFP_PROJECT = Path(WINDOWS_PROJECT_DIR, 'minimal-app.ifp')
@@ -47,7 +47,7 @@ def test_config():
     data_directory = str(Path(parent, 'test_data'))
     windows_home = str(Path(parent, 'test_data', 'windows-projects'))
     assert config.data_directory == data_directory
-    assert config.windows_base_directory == windows_home
+    assert config.build_base_dir == windows_home
 
 
 def test_number_of_projects():
@@ -55,9 +55,9 @@ def test_number_of_projects():
 
 
 def test_project_attributes():
-    print(min_project.src_directory)
+    print(min_project.dev_source_dir)
     assert min_project.name == 'minimal-app'
-    assert min_project.installation_path == 'BfG\\MinimalApp'
+    assert min_project.win_install_path == 'BfG\\MinimalApp'
     assert min_project.exe_name == 'MinimalApp'
 
 

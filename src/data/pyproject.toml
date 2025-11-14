@@ -4,10 +4,24 @@ version = "<version>"
 description = "<description>"
 authors = [{name = "<author>", email = "<email>"}]
 readme = "README.md"
-requires-python = ">=3.13,<3.14"
-dependencies = [
-  "pyinstaller"
+requires-python = ">=3.9"
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+build = [
+    "pyinstaller>=6.16.0",
+    "pyinstaller-hooks-contrib>=2025.9",
 ]
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"<project>" = ["images/*"]
+
 [project.scripts]
-build = "<project>.pyinstaller:install"
+<project> = "<project>.main:main"
+build-exe      = "<project>.build_exe:build"

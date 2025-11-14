@@ -18,7 +18,7 @@ txt = Text()
 FRAME_TITLE = f'{APP_TITLE} - {txt.CONFIG}'
 
 FIELDS = {
-    'windows_base_directory': tk.StringVar,
+    'build_base_dir': tk.StringVar,
     'windows_project_directory': tk.StringVar,
     'author': tk.StringVar,
     'email': tk.StringVar,
@@ -74,10 +74,10 @@ class ConfigFrame():
         row = 0
         label = ttk.Label(frame, text='Windows base directory')
         label.grid(row=row, column=0, sticky=tk.E, padx=PAD, pady=PAD)
-        entry = ttk.Entry(frame, textvariable=self.windows_base_directory)
+        entry = ttk.Entry(frame, textvariable=self.build_base_dir)
         entry.grid(row=row, column=1, sticky=tk.EW)
         button = ttk.Button(frame, text=txt.ELLIPSIS,
-                            command=self._get_windows_base_directory)
+                            command=self._get_build_base_dir)
         button.grid(row=row, column=2, padx=PAD)
 
         row += 1
@@ -109,13 +109,13 @@ class ConfigFrame():
         frame.enable(False)
         return frame
 
-    def _get_windows_base_directory(self, *args):
+    def _get_build_base_dir(self, *args):
         # pylint: disable=no-member)
         dlg = filedialog.askdirectory(
-            initialdir=self.windows_base_directory.get(),
+            initialdir=self.build_base_dir.get(),
         )
         if dlg:
-            self.windows_base_directory.set(dlg)
+            self.build_base_dir.set(dlg)
 
     def _check_value_changed(self, *args) -> None:
         enable = bool(self._config_changes())

@@ -1,0 +1,16 @@
+set shell := ["cmd.exe", "/d", "/c"]
+
+list:
+    just --list
+
+run:
+    uv run src/<project>/main.py
+
+build:
+    uv run --group build python src/<project>/build_exe.py
+
+exe:
+    dist\<exe_name>.exe
+
+test:
+    uv run -m pytest

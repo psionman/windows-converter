@@ -8,7 +8,7 @@ from windows_converter.constants import CONFIG_PATH, USER_DATA_DIR, HOME
 DEFAULT_CONFIG = {
     'data_directory': USER_DATA_DIR,
     'projects_directory': Path(HOME, 'projects'),
-    'windows_base_directory': Path(HOME, 'projects', 'windows-projects'),
+    'build_base_dir': Path(HOME, 'projects', 'windows-projects'),
     'last_project': '',
     'author': '',
     'email': '',

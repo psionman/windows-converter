@@ -1,5 +1,5 @@
 data_directory = "/home/jeff/projects/utilities/windows-converter/tests/test_data"
-windows_base_directory = "/home/jeff/projects/utilities/windows-converter/tests/test_data/windows-projects"
+build_base_dir = "/home/jeff/projects/utilities/windows-converter/tests/test_data/windows-projects"
 author = "Jeff Watkins"
 windows_project_directory = "C:\\Users\\jeffw\\projects"
 windows_installation = ""

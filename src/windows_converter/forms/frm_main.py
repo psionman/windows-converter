@@ -125,11 +125,11 @@ class MainFrame():
             return
         names = sorted(list(self.projects))
         self._project_selected(names[selection[0]])
-        self.config.update('last_project', self.project.name)
+        self.config.update('last_project', self.project.id)
         self.config.save()
 
-    def _project_selected(self, project_name: str) -> None:
-        self.project = self.projects[project_name]
+    def _project_selected(self, project_id: str) -> None:
+        self.project = self.projects[project_id]
         self.button_frame.enable()
         self.context_menu.enable()
 

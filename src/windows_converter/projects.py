@@ -2,7 +2,6 @@
 
 import contextlib
 from tkinter import messagebox
-from typing import NamedTuple
 import json
 import os
 import shutil
@@ -11,50 +10,37 @@ from pathlib import Path
 from windows_converter.constants import PROJECT_FILE, USER_DATA_DIR
 from windows_converter.config import TomlConfig
 from windows_converter.build import build_project
-
-class ProjectData(NamedTuple):
-    name: str
-    description: str
-    author: str
-    exe_name: str
-    windows_projects_dir: str
-    project_base_dir: str
-    src_directory: str
-    image_directory: str
-    windows_directory: str
-    company_name: str
-    installation_path: str
-    start_menu_text: str
+from windows_converter import logger
 
 
 class Project():
     def __init__(self, data: dict = None) -> None:
         if data is None:
             data = {}
+        self.id: str = ''
         self.name = ''
         self.description = ''
         self.author = ''
         self.email = ''
-        self.exe_name = ''
-        self.windows_projects_dir = ''
-        self.project_base_dir = ''
-        self.src_directory = ''
-        self.image_directory = ''
+
+        self.dev_base_dir = ''
+        self.dev_source_dir = ''
+        self.dev_image_dir = ''
         self.tests_directory = ''
-        self.windows_directory = ''
-        self.company_name = ''
-        self.installation_path = ''
+
+        self.win_source_dir = ''
+
+        self.win_install_path = ''
         self.start_menu_text = ''
+        self.company_name = ''
+        self.exe_name = ''
         self.version = '0.0.0'
         self.status_ok = 1
 
         if data and isinstance(data, dict):
             self._assign_attributes(data)
 
-        if not self.windows_projects_dir:
-            self.windows_projects_dir = self.name
-
-        if self.project_base_dir:
+        if self.dev_base_dir:
             self._get_directories()
 
     def _assign_attributes(self, data: dict) -> None:
@@ -75,20 +61,20 @@ class Project():
         return f'Project: {self.name}'
 
     def _get_directories(self) -> None:
-        if not self.src_directory:
+        if not self.dev_source_dir:
             self._get_src_directory()
-        if not self.image_directory:
+        if not self.dev_image_dir:
             self._get_image_directory()
         if not self.tests_directory:
             self._get_tests_directory()
 
     def _get_src_directory(self) -> None:
         names = ['src', 'source']
-        self.src_directory = self._get_dir(names)
+        self.dev_source_dir = self._get_dir(names)
 
     def _get_image_directory(self) -> None:
         names = ['images']
-        self.image_directory = self._get_dir(names)
+        self.dev_image_dir = self._get_dir(names)
 
     def _get_tests_directory(self) -> None:
         names = ['tests']
@@ -96,7 +82,7 @@ class Project():
 
     def _get_dir(self, names: list[str]) -> str:
         for directory_name, subdir_list, _ in os.walk(
-                self.project_base_dir):
+                self.dev_base_dir):
             for subdir_name in subdir_list:
                 if subdir_name in names:
                     return str(Path(directory_name, subdir_name))
@@ -116,12 +102,11 @@ class Project():
         return build_project(
             self,
             config,
-            self.windows_projects_dir,
             update_requirements,
             testing,)
 
     def _validate_icons(self, src_dir: Path, testing: bool) -> None:
-        dirs = [dir.name for dir in Path(self.src_directory).iterdir()
+        dirs = [dir.name for dir in Path(self.dev_source_dir).iterdir()
                 if dir.is_dir()]
         if 'images' in dirs and not testing:
             dlg = messagebox.askyesno(
@@ -133,7 +118,7 @@ class Project():
         if testing and Path(src_dir, 'images').is_dir():
             shutil.rmtree(Path(src_dir, 'images'))
 
-        images_dir = Path(Path(self.src_directory), 'images')
+        images_dir = Path(Path(self.dev_source_dir), 'images')
         if (not Path(images_dir, 'icon.ico').is_file()
                 or not Path(images_dir, 'icon.png').is_file()):
             dlg = messagebox.showerror(
@@ -156,16 +141,16 @@ class ProjectServer():
         try:
             with open(PROJECT_FILE, 'r', encoding='utf-8') as f_projects:
                 raw_data = json.load(f_projects)
-            for name, data in raw_data.items():
+            for id, data in raw_data.items():
                 project = Project(data)
-                project.name = name
-                projects[project.name] = project
+                project.id = id
+                projects[id] = project
         except FileNotFoundError:
-            print(f'*** {PROJECT_FILE} FileNotFoundError ***')
+            logger.error(f'{PROJECT_FILE} FileNotFoundError')
         except IsADirectoryError:
-            print(f'*** {PROJECT_FILE} IsADirectoryError ***')
+            logger.error(f'{PROJECT_FILE} IsADirectoryError')
         except json.decoder.JSONDecodeError:
-            print(f'*** {PROJECT_FILE} SONDecodeError ***')
+            logger.error(f'{PROJECT_FILE} JSONDecodeError')
         return projects
 
     def save_projects(self, projects: list[Project] = None) -> None:
@@ -174,7 +159,7 @@ class ProjectServer():
         if not projects:
             projects = self.projects
 
-        projects_dict = {project.name: vars(project)
+        projects_dict = {project.id: vars(project)
                          for project in projects.values()}
         with open(PROJECT_FILE, 'w', encoding='utf-8') as f_projects:
             json.dump(projects_dict, f_projects)
